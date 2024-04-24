@@ -23,16 +23,22 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.data.EmptyGroup.name
 import androidx.core.content.ContextCompat.checkSelfPermission
 import com.example.pointsofinterest_hannahann.ui.theme.PointsOfInterest_hannahannTheme
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import android.Manifest
+import android.app.Notification.BubbleMetadata
+import android.health.connect.datatypes.ExerciseRoute
+import android.location.Location
+import android.os.Build
+import androidx.annotation.RequiresApi
 
-class MainActivity : ComponentActivity() , LocationListener{
-    fun startGPS() {
+public class MainActivity : ComponentActivity() , LocationListener{
+    private fun startGPS() {
         val mgr = getSystemService(LOCATION_SERVICE) as LocationManager
+        //CHECKS WHETHER ACCESS FINE LOCATION PERMISSION HAS BEEN GRANTED AT RUNTIME
         if (checkSelfPermission(
                 this,
                 android.Manifest.permission.ACCESS_FINE_LOCATION
@@ -52,6 +58,29 @@ class MainActivity : ComponentActivity() , LocationListener{
         }
         mgr.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0f, this)
     }
+
+    //Runs when a new location is received from the provider
+    override fun onLocationChanged(location: Location) {
+        Toast.makeText(this, "Latitude: ${location.latitude}, Longitude: ${location.longitude}", Toast.LENGTH_LONG).show()    }
+
+
+    //When you physically disable or enable the GPS from device
+    //run a specific behaviour to occur when the user switches the GPS ON and OFF
+    //write this infomation here
+    override fun onProviderEnabled(provider: String) {
+        Toast.makeText(this, "GPS enabled", Toast.LENGTH_LONG).show()
+
+    }
+    //When you physically disable or enable the GPS from device
+    //run a specific behaviour to occur when the user switches the GPS ON and OFF
+    //write this infomation here
+    override fun onProviderDisabled(provider: String) {
+        Toast.makeText(this, "GPS disabled", Toast.LENGTH_LONG).show()
+    }
+
+    override fun onStatusChanged(provider: String,status:Int, extras: Bundle){
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
@@ -61,72 +90,58 @@ class MainActivity : ComponentActivity() , LocationListener{
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
+                    //This is the top level Parent Composable which helps with the navigation between each of the screens
                     //sets up the controller and remember the rotates
                     val navController = rememberNavController()
                     //These initialise the application starting point
                     NavHost(navController=navController, startDestination="homeScreen") {
                         composable("homeScreen") {
-                            HomeScreenComposable()(
+                            HomeScreenComposable { }
                         }
                         composable("poiScreen") {
-                            AddPOIScreen()
+                            AddPOIScreenComposable()
                         }
                     }
-                    //Just tesing if the application is running
-                    Greeting("Test to see if the application is running ")
+                    //FUNCTIONS TO BE CALLED WOULD BE INSIDE HERE
+
                 }
             }
         }
     }
-}
-//this is a function to check if it has the appropriate permission granted for the mapping fucntion
-fun checkPermissions() {
-    val requiredPermission = Manifest.permission.ACCESS_FINE_LOCATION
+    //this is a function to check if it has the appropriate permission granted for the mapping fucntion
+    fun checkPermissions() {
+        val requiredPermission = Manifest.permission.ACCESS_FINE_LOCATION
 
-    if(checkSelfPermission(requiredPermission) == PackageManager.PERMISSION_GRANTED) {
-        startGPS() // a function to start the GPS - see below
-    } else {
-        // Request the permission
-        val permissionLauncher = registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
-            if(isGranted) {
-                startGPS() // A function to start the GPS - see below
-            } else {
-                // Permission not granted
-                Toast.makeText(this, "GPS permission not granted", Toast.LENGTH_LONG).show()
+        if(checkSelfPermission(requiredPermission) == PackageManager.PERMISSION_GRANTED) {
+            startGPS() // a function to start the GPS - see below
+        } else {
+            // Request the permission
+            val permissionLauncher = registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
+                if(isGranted) {
+                    startGPS() // A function to start the GPS - see below
+                } else {
+                    // Permission not granted
+                    Toast.makeText(this, "GPS permission not granted", Toast.LENGTH_LONG).show()
+                }
             }
+            permissionLauncher.launch(requiredPermission)
         }
-        permissionLauncher.launch(requiredPermission)
     }
 }
 
-//This is the top level Parent Composable which helps with the navigation between each of the screens
-@Composable
-fun ParentComposable(){
-    val navController = rememberNavController()
-    NavHost(navController=navController) {
-        composable("homeScreen") {
-            HomeScreenComposable(AddPOIScreen = {
-                navController.navigate("poiScreen")
-            })
-        }
-        composable("poiScreen") {
-            AddPOIScreen()
-        }
-    }
-
-//This is the main page which when clicked will nanigate to enter the appication.
+//This is the main page which when clicked will navigate to enter the application.
 //Mainly here for testing purposes
 @Composable
 //AddPOIScreen IS a call back function
-fun HomeScreenComposable(AddPOIScreen:() -> Unit){
-    Button(onClick = {AddPOIScreen()}){
+fun HomeScreenComposable(addPOIScreen:() -> Unit){
+    Button(onClick = {addPOIScreen()}){
         Text("Click to Enter Application")
     }
 }
 
-//This Screen displays the infomation to add the infomation which the user writes and apply it tot the SQLite database
+//This Screen displays the information to add the information which the user writes and apply it tot the SQLite database
 @Composable
-fun AddPOIScreen(){
+fun AddPOIScreenComposable(){
     var name by remember { mutableStateOf (" ") }
     var type by remember { mutableStateOf (" ") }
     var description by remember { mutableStateOf (" ") }
@@ -140,13 +155,4 @@ fun AddPOIScreen(){
                 description = it })
         }
     }
-}
-
-//Just tesing if the application is running
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello!",
-        modifier = modifier
-    )
 }
