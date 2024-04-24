@@ -164,7 +164,7 @@ fun AddPOIScreenComposable(){
                 //button to click and connect to the database to add the POI to the database
                 //uses lifecycle
             }) {
-                Text('Name')
+                Text("Name")
             }
         }
     }
