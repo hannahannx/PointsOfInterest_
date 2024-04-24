@@ -97,7 +97,7 @@ public class MainActivity : ComponentActivity() , LocationListener{
                     //These initialise the application starting point
                     NavHost(navController=navController, startDestination="poiScreen") {
                         composable("homeScreen") {
-                            HomeScreenComposable { }
+                            HomeScreenComposable()
                         }
                         composable("poiScreen") {
                             AddPOIScreenComposable()
@@ -135,8 +135,8 @@ public class MainActivity : ComponentActivity() , LocationListener{
 //Mainly here for testing purposes
 @Composable
 //AddPOIScreen IS a call back function
-fun HomeScreenComposable(addPOIScreen:() -> Unit){
-    Button(onClick = {addPOIScreen()}){
+fun HomeScreenComposable(){
+    Button(onClick = {}){
         Text("Click to Enter Application")
     }
 }
@@ -159,6 +159,7 @@ fun AddPOIScreenComposable(){
             Spacer(Modifier.height(10.dp))
             OutlinedTextField(value = description, onValueChange = { description = it })
             Spacer(Modifier.height(10.dp))
+            //this button should have a label TEXT but currently not working
             Button(onClick = {
                 //button to click and connect to the database to add the POI to the database
                 //uses lifecycle
