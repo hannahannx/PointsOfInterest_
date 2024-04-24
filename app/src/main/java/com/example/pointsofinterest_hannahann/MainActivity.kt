@@ -1,19 +1,24 @@
 package com.example.pointsofinterest_hannahann
 
+import android.Manifest
 import android.content.pm.PackageManager
+import android.location.Location
 import android.location.LocationListener
 import android.location.LocationManager
 import android.os.Bundle
-import android.os.ProxyFileDescriptorCallback
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
@@ -22,18 +27,14 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat.checkSelfPermission
-import com.example.pointsofinterest_hannahann.ui.theme.PointsOfInterest_hannahannTheme
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import android.Manifest
-import android.app.Notification.BubbleMetadata
-import android.health.connect.datatypes.ExerciseRoute
-import android.location.Location
-import android.os.Build
-import androidx.annotation.RequiresApi
+import com.example.pointsofinterest_hannahann.ui.theme.PointsOfInterest_hannahannTheme
 
 public class MainActivity : ComponentActivity() , LocationListener{
     private fun startGPS() {
@@ -66,14 +67,14 @@ public class MainActivity : ComponentActivity() , LocationListener{
 
     //When you physically disable or enable the GPS from device
     //run a specific behaviour to occur when the user switches the GPS ON and OFF
-    //write this infomation here
+    //write this information here
     override fun onProviderEnabled(provider: String) {
         Toast.makeText(this, "GPS enabled", Toast.LENGTH_LONG).show()
 
     }
     //When you physically disable or enable the GPS from device
     //run a specific behaviour to occur when the user switches the GPS ON and OFF
-    //write this infomation here
+    //write this information here
     override fun onProviderDisabled(provider: String) {
         Toast.makeText(this, "GPS disabled", Toast.LENGTH_LONG).show()
     }
@@ -94,7 +95,7 @@ public class MainActivity : ComponentActivity() , LocationListener{
                     //sets up the controller and remember the rotates
                     val navController = rememberNavController()
                     //These initialise the application starting point
-                    NavHost(navController=navController, startDestination="homeScreen") {
+                    NavHost(navController=navController, startDestination="poiScreen") {
                         composable("homeScreen") {
                             HomeScreenComposable { }
                         }
@@ -108,7 +109,8 @@ public class MainActivity : ComponentActivity() , LocationListener{
             }
         }
     }
-    //this is a function to check if it has the appropriate permission granted for the mapping fucntion
+
+    //this is a function to check if it has the appropriate permission granted for the mapping function
     fun checkPermissions() {
         val requiredPermission = Manifest.permission.ACCESS_FINE_LOCATION
 
@@ -146,13 +148,23 @@ fun AddPOIScreenComposable(){
     var type by remember { mutableStateOf (" ") }
     var description by remember { mutableStateOf (" ") }
     Box{
-        Column{
-            TextField(value = name, onValueChange = {
-                name = it } )
-            TextField(value = type, onValueChange = {
-                type = it })
-            TextField(value = description, onValueChange = {
-                description = it })
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ){
+            OutlinedTextField(value = name, onValueChange = { name = it })
+            Spacer(Modifier.height(10.dp))
+            OutlinedTextField(value = type, onValueChange = { type = it })
+            Spacer(Modifier.height(10.dp))
+            OutlinedTextField(value = description, onValueChange = { description = it })
+            Spacer(Modifier.height(10.dp))
+            Button(onClick = {
+                //button to click and connect to the database to add the POI to the database
+                //uses lifecycle
+            }) {
+                Text('Name')
+            }
         }
     }
 }
