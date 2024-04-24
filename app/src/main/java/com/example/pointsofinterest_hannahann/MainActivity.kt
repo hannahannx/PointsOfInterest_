@@ -10,6 +10,8 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -18,6 +20,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -29,7 +32,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.modifier.modifierLocalConsumer
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat.checkSelfPermission
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -136,8 +143,14 @@ public class MainActivity : ComponentActivity() , LocationListener{
 @Composable
 //AddPOIScreen IS a call back function
 fun HomeScreenComposable(){
-    Button(onClick = {}){
-        Text("Click to Enter Application")
+    Column(
+        modifier = Modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+        Button(onClick = {}){
+            Text("Click to go to ADD POI")
+        }
     }
 }
 
@@ -147,12 +160,18 @@ fun AddPOIScreenComposable(){
     var name by remember { mutableStateOf (" ") }
     var type by remember { mutableStateOf (" ") }
     var description by remember { mutableStateOf (" ") }
-    Box{
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .border(BorderStroke(10.dp, Color.Black))
+    ){
         Column(
             modifier = Modifier.fillMaxSize(),
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ){
+            Text("Add new POI" , fontSize = 40.sp, fontWeight = FontWeight.Bold)
+            Spacer(Modifier.height(100.dp))
             OutlinedTextField(value = name, onValueChange = { name = it })
             Spacer(Modifier.height(10.dp))
             OutlinedTextField(value = type, onValueChange = { type = it })
@@ -160,11 +179,11 @@ fun AddPOIScreenComposable(){
             OutlinedTextField(value = description, onValueChange = { description = it })
             Spacer(Modifier.height(10.dp))
             //this button should have a label TEXT but currently not working
-            Button(onClick = {
+            OutlinedButton(onClick = {
                 //button to click and connect to the database to add the POI to the database
                 //uses lifecycle
             }) {
-                Text("Name")
+                Text("Add")
             }
         }
     }
