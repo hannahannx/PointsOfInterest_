@@ -38,6 +38,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat.checkSelfPermission
+import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -102,9 +103,9 @@ public class MainActivity : ComponentActivity() , LocationListener{
                     //sets up the controller and remember the rotates
                     val navController = rememberNavController()
                     //These initialise the application starting point
-                    NavHost(navController=navController, startDestination="poiScreen") {
+                    NavHost(navController= navController, startDestination="homeScreen") {
                         composable("homeScreen") {
-                            HomeScreenComposable()
+                            HomeScreenComposable(navController)
                         }
                         composable("poiScreen") {
                             AddPOIScreenComposable()
@@ -142,14 +143,22 @@ public class MainActivity : ComponentActivity() , LocationListener{
 //Mainly here for testing purposes
 @Composable
 //AddPOIScreen IS a call back function
-fun HomeScreenComposable(){
-    Column(
-        modifier = Modifier.fillMaxSize(),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
+fun HomeScreenComposable(navController: NavController){
+    Box (
+        modifier = Modifier
+            .fillMaxSize()
+            .border(BorderStroke(10.dp, Color.Black))
+    ){
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-        Button(onClick = {}){
-            Text("Click to go to ADD POI")
+            Button(onClick = {
+                navController.navigate("poiScreen")
+            }) {
+                Text("Click to go to ADD POI")
+            }
         }
     }
 }
