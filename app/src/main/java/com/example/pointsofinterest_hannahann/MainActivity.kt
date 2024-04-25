@@ -41,6 +41,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -60,17 +61,17 @@ import androidx.lifecycle.ViewModel
 
 
 public class MainActivity : ComponentActivity() , LocationListener{
-    val viewModel : TestViewModel by viewModels()
-
-    data class LatiLong(val lati: Double, val long: Double) // our LatLon class
+    val viewModel : LatLonViewModel by viewModels()
+    data class LatLon(val lati: Double, val long: Double) // our LatLon class
 
     class LatLonViewModel: ViewModel() {
-        var latiLong = LatiLong(51.05, -0.72)
+        var latLon = LatLon(51.05, -0.72)
             set(newValue) {
                 field = newValue
                 latLonLiveData.value = newValue
             }
-        var latLonLiveData = MutableLiveData<LatiLong>()
+
+        var latLonLiveData = MutableLiveData<LatLon>()
     }
 
     private fun startGPS() {
@@ -195,31 +196,31 @@ fun HomeScreenComposable(navController: NavController){
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
+                Row{
+                TextField(value = lati, onValueChange = {lati = it})
+                TextField(value = long, onValueChange = {lati = it})
+            }
+                //This button changes the current location
+                Button(onClick = {
+                    currentLocation = GeoPoint(lati.toDouble(),long.toDouble())
+                }){
+
+                }
+                //This button navigates to the ADDPOI SCREEN
+                Button(onClick = {
+                    navController.navigate("poiScreen")
+                }) {
+                    Text("Click to go to ADD POI")
+                }
+                //Map function
+                MapComposable(
+                    mod = Modifier
+                        .fillMaxSize()
+                        .zIndex(1.0f),
+                    longLati =  currentLocation)
             }
         }
-        Row(
 
-        ){
-            TextField(value = lati, onValueChange = {lati = it})
-            TextField(value = long, onValueChange = {lati = it})
-        }
-            //This button changes the current location
-            Button(onClick = {
-                currentLocation = GeoPoint(lati.toDouble(),long.toDouble())
-            }){
-
-            }
-            //This button navigates to the ADDPOI SCREEN
-            Button(onClick = {
-                navController.navigate("poiScreen")
-            }) {
-                Text("Click to go to ADD POI")
-            }
-        //Map function
-        MapComposable(
-            mod = Modifier
-                .fillMaxSize(),
-            longLati =  currentLocation)
         }
     }
 
@@ -267,16 +268,16 @@ fun AddPOIScreenComposable(){
     ){
         Column(
             modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.Top,
-            horizontalAlignment = Alignment.Start
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
         ){
             Text("Add new POI" , fontSize = 40.sp, fontWeight = FontWeight.Bold)
             Spacer(Modifier.height(100.dp))
-            OutlinedTextField(value = name, onValueChange = { name = it })
+            OutlinedTextField(value = name, onValueChange = { name = it } , label = {"Name"})
             Spacer(Modifier.height(10.dp))
-            OutlinedTextField(value = type, onValueChange = { type = it })
+            OutlinedTextField(value = type, onValueChange = { type = it }, label = {"Type"})
             Spacer(Modifier.height(10.dp))
-            OutlinedTextField(value = description, onValueChange = { description = it })
+            OutlinedTextField(value = description, onValueChange = { description = it }, label = {"Description"})
             Spacer(Modifier.height(10.dp))
             //this button should have a label TEXT but currently not working
             OutlinedButton(onClick = {
