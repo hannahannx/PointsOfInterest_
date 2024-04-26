@@ -40,6 +40,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.modifier.modifierLocalConsumer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -196,10 +197,14 @@ fun HomeScreenComposable(navController: NavController){
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Row{
-                TextField(value = lati, onValueChange = {lati = it})
-                TextField(value = long, onValueChange = {lati = it})
-            }
+                Row(
+                    modifier = Modifier.fillMaxWidth() ,
+                    //verticalArrangement = Arrangement.Top
+                    verticalAlignment = Alignment.Top,
+                ){
+                    TextField(modifier = Modifier.weight(1.0f), value = lati, onValueChange = {lati = it})
+                    TextField(modifier = Modifier.weight(1.0f), value = long, onValueChange = {lati = it})
+                }
                 //This button changes the current location
                 Button(onClick = {
                     currentLocation = GeoPoint(lati.toDouble(),long.toDouble())
@@ -213,16 +218,16 @@ fun HomeScreenComposable(navController: NavController){
                     Text("Click to go to ADD POI")
                 }
                 //Map function
-                MapComposable(
-                    mod = Modifier
-                        .fillMaxSize()
-                        .zIndex(1.0f),
-                    longLati =  currentLocation)
+//                MapComposable(
+//                    mod = Modifier
+//                        .fillMaxSize()
+//                        .zIndex(1.0f),
+//                    longLati =  currentLocation)
             }
         }
 
-        }
     }
+}
 
 @Composable
 fun MapComposable(mod: Modifier,longLati: GeoPoint){
