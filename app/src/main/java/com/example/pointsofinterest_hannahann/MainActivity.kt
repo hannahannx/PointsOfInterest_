@@ -2,13 +2,11 @@ package com.example.pointsofinterest_hannahann
 
 import android.Manifest
 import android.content.pm.PackageManager
-import android.content.res.Configuration
 import android.location.Location
 import android.location.LocationListener
 import android.location.LocationManager
 import android.os.Bundle
 import android.preference.PreferenceManager
-import android.speech.tts.TextToSpeech
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -20,9 +18,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -33,28 +29,21 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshots.Snapshot.Companion.observe
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.modifier.modifierLocalConsumer
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.max
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.zIndex
 import androidx.core.content.ContextCompat.checkSelfPermission
 import androidx.lifecycle.LifecycleOwner
-import androidx.lifecycle.MutableLiveData
 import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -124,10 +113,6 @@ public class MainActivity : ComponentActivity() , LocationListener{
                 .border(BorderStroke(10.dp, Color.Black))
                 .padding(10.dp)
         ){
-            var lati :String by remember { mutableStateOf("") }
-            var long :String by remember { mutableStateOf("") }
-            var currentLocation : GeoPoint by remember { mutableStateOf(GeoPoint(51.05,-0.72)) }
-            val maxHeight = 24.dp
             Surface(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -139,12 +124,6 @@ public class MainActivity : ComponentActivity() , LocationListener{
                     modifier = Modifier.fillMaxWidth(),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    //This button changes the current location
-                    Button(onClick = {
-                        currentLocation = GeoPoint(lati.toDouble(),long.toDouble())
-                    }){
-
-                    }
                     //This button navigates to the ADDPOI SCREEN
                     Button(onClick = {
                         navController.navigate("poiScreen")
@@ -154,25 +133,28 @@ public class MainActivity : ComponentActivity() , LocationListener{
                     GpsPosition(latLonViewModel, this@MainActivity)
                 }
             }
-            MapComposable(mod = Modifier
+            MapComposable(
+                mod = Modifier
                 .fillMaxWidth(),
-                longLati = currentLocation)
+                latLonViewModel,
+                this@MainActivity)
 
         }
     }
 
     @Composable
     fun GpsPosition(latLonViewModel: LatLonViewModel, owner: LifecycleOwner) {
-        //this will be the starting postion for the map latitude and longitude
-        var latLon by remember { mutableStateOf(LatLonViewModel.LatLon(51.05, -0.71))}
+        //this will be the starting postion for the map latitude and longitude when the GPS starts
+        var latLon by remember { mutableStateOf(LatLonViewModel.LatLon(51.05, -0.75))}
         latLonViewModel.liveDataLatLon.observe(owner) {
             latLon = it
         }
         Text("Lat ${latLon.lat} lon ${latLon.lon}")
+        MapComposable(mod = Modifier.fillMaxWidth(), latLonViewModel, this@MainActivity)
     }
 
     @Composable
-    fun MapComposable(mod: Modifier,longLati: GeoPoint){
+    fun MapComposable(mod: Modifier, latLonViewModel: LatLonViewModel,owner: LifecycleOwner){
         AndroidView(
             modifier = mod,
             factory = { ctx ->
@@ -185,25 +167,16 @@ public class MainActivity : ComponentActivity() , LocationListener{
                     setMultiTouchControls(true)
                     setTileSource(TileSourceFactory.MAPNIK)
                 }
-                val marker = Marker(map1)
-                marker.apply {
-                    position = GeoPoint(51.05, -0.72)
-                    title = ("${title}")
-                }
-
-                map1.overlays.add(marker)
                 map1
             },
             update = { view ->
                 view.controller.setZoom(14.0)
-                view.controller.setCenter(longLati)
+                view.controller.setCenter(0)
             }
         )
     }
 
-
-
-    //This Screen displays the information tzo add the information which the user writes and apply it tot the SQLite database
+    //This Screen displays the information to add the information which the user writes and apply it tot the SQLite database
     @Composable
     fun AddPOIScreenComposable(navController: NavController){
         var name by remember { mutableStateOf (" ") }
@@ -273,14 +246,12 @@ public class MainActivity : ComponentActivity() , LocationListener{
                     //This is the top level Parent Composable which helps with the navigation between each of the screens
                     //sets up the controller and remember the rotates
                     val navController = rememberNavController()
-                    var geoPoint: GeoPoint by remember { mutableStateOf(GeoPoint(50.9, -1.4)) }
                     //These initialise the application starting point
                     NavHost(navController= navController, startDestination="homeScreen") {
                         composable("homeScreen") {
                             /*When the user clicks the button in the UI, this lambda is called with the new value of geoPoint  from the UI.
                             Inside this lambda, the geoPoint variable is updated to the new value received from the UI*/
                             HomeScreenComposable(navController)
-
                         }
                         composable("poiScreen") {
                             AddPOIScreenComposable(navController)
@@ -317,4 +288,5 @@ public class MainActivity : ComponentActivity() , LocationListener{
         }
     }
 }
+
 
