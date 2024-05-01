@@ -8,6 +8,7 @@ import android.location.LocationListener
 import android.location.LocationManager
 import android.os.Bundle
 import android.preference.PreferenceManager
+import android.speech.tts.TextToSpeech
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -38,6 +39,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshots.Snapshot.Companion.observe
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -62,11 +64,10 @@ import org.osmdroid.views.MapView
 import com.example.pointsofinterest_hannahann.ui.theme.PointsOfInterest_hannahannTheme
 import org.osmdroid.views.overlay.Marker
 import androidx.lifecycle.ViewModel
-import
 
 
 public class MainActivity : ComponentActivity() , LocationListener{
-    val locationViewModel : LatLonViewModel by viewModels()
+    val latLonViewModel : LatLonViewModel by viewModels()
 
     private fun startGPS() {
         val mgr = getSystemService(LOCATION_SERVICE) as LocationManager
@@ -135,7 +136,10 @@ public class MainActivity : ComponentActivity() , LocationListener{
                             HomeScreenComposable(navController)
                         }
                         composable("poiScreen") {
-                            AddPOIScreenComposable()
+                            AddPOIScreenComposable(navController)
+                        }
+                        composable("settingsScreen"){
+                            SettingsScreenComposable()
                         }
                     }
                     //FUNCTIONS TO BE CALLED WOULD BE INSIDE HERE
@@ -213,17 +217,6 @@ fun HomeScreenComposable(navController: NavController){
 
     }
 }
-@Composable
-fun GpsPositionComposable( ) {
-
-    var latLon by remember { mutableStateOf(LatLon())}
-
-    LatLonViewModel.liveLatLon.observe(this) {
-        latLon = it
-    }
-    Text("Lat ${latLon.lat} lon ${latLon.lon}")
-}
-
 
 @Composable
 fun MapComposable(mod: Modifier,longLati: GeoPoint){
@@ -255,9 +248,19 @@ fun MapComposable(mod: Modifier,longLati: GeoPoint){
     )
 }
 
+@Composable
+fun GpsPositionComposable( ) {
+    //this will be the starting postion for the map latitude and longitude
+    var latLon by remember { mutableStateOf(LatLonViewModel.LatLon(51.05, -0.71))}
+    LatLonViewModel.liveDataLatLon.observe(this) {
+        latLon = it
+   }
+    Text("Lat ${latLon.lat} lon ${latLon.lon}")
+}
+
 //This Screen displays the information tzo add the information which the user writes and apply it tot the SQLite database
 @Composable
-fun AddPOIScreenComposable(){
+fun AddPOIScreenComposable(navController: NavController){
     var name by remember { mutableStateOf (" ") }
     var type by remember { mutableStateOf (" ") }
     var description by remember { mutableStateOf (" ") }
@@ -273,7 +276,6 @@ fun AddPOIScreenComposable(){
             horizontalAlignment = Alignment.CenterHorizontally
         ){
             Text("Add new POI" , fontSize = 40.sp, fontWeight = FontWeight.Bold)
-            Spacer(Modifier.height(100.dp))
             OutlinedTextField(value = name, onValueChange = { name = it } , label = {"Name"})
             Spacer(Modifier.height(10.dp))
             OutlinedTextField(value = type, onValueChange = { type = it }, label = {"Type"})
@@ -287,6 +289,27 @@ fun AddPOIScreenComposable(){
             }) {
                 Text("Add")
             }
+            Text("Small map will go here to show that it has been added")
+            Button(
+                onClick = {
+                navController.navigate("settingsScreen")
+            }){
+                Text(text = "Click to go to SETTINGS Screen")
+            }
+        }
+        }
+    }
+
+@Composable
+fun SettingsScreenComposable(){
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .border(BorderStroke(10.dp, Color.Black))
+            .padding(20.dp)
+    ){
+        Column {
+                Text("This is the settings screen")
         }
     }
 }

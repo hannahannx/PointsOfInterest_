@@ -3,13 +3,14 @@ package com.example.pointsofinterest_hannahann
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 
-data class LatLon(var lat: Double=51.05, var lon: Double=-0.72)
+
 class LatLonViewModel : ViewModel() {
-    var latLon =  LatLon()
-        set(newVal) {
-            field = newVal
-            liveLatLon.value = newVal
+    data class LatLon(var lat: Double, var lon: Double)
+    var latLon =  LatLon(51.05,-0.71)
+        set(newValue) {
+            field = newValue
+            liveDataLatLon.value = newValue
         }
 
-    var liveLatLon = MutableLiveData<LatLon>()
+    var liveDataLatLon = MutableLiveData<LatLon>()
 }
