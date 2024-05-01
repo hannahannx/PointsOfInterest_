@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -43,7 +44,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.modifier.modifierLocalConsumer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.max
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.zIndex
@@ -59,21 +62,11 @@ import org.osmdroid.views.MapView
 import com.example.pointsofinterest_hannahann.ui.theme.PointsOfInterest_hannahannTheme
 import org.osmdroid.views.overlay.Marker
 import androidx.lifecycle.ViewModel
+import
 
 
 public class MainActivity : ComponentActivity() , LocationListener{
-    val viewModel : LatLonViewModel by viewModels()
-    data class LatLon(val lati: Double, val long: Double) // our LatLon class
-
-    class LatLonViewModel: ViewModel() {
-        var latLon = LatLon(51.05, -0.72)
-            set(newValue) {
-                field = newValue
-                latLonLiveData.value = newValue
-            }
-
-        var latLonLiveData = MutableLiveData<LatLon>()
-    }
+    val locationViewModel : LatLonViewModel by viewModels()
 
     private fun startGPS() {
         val mgr = getSystemService(LOCATION_SERVICE) as LocationManager
@@ -100,7 +93,8 @@ public class MainActivity : ComponentActivity() , LocationListener{
 
     //Runs when a new location is received from the provider
     override fun onLocationChanged(location: Location) {
-        Toast.makeText(this, "Latitude: ${location.latitude}, Longitude: ${location.longitude}", Toast.LENGTH_LONG).show()    }
+        LatLonViewModel.LatLon(location.latitude, location.longitude)
+        }
 
 
     //When you physically disable or enable the GPS from device
@@ -149,10 +143,11 @@ public class MainActivity : ComponentActivity() , LocationListener{
                 }
             }
         }
+        checkPermissions()
     }
 
     //this is a function to check if it has the appropriate permission granted for the mapping function
-    fun checkPermissions() {
+    private fun checkPermissions() {
         val requiredPermission = Manifest.permission.ACCESS_FINE_LOCATION
 
         if(checkSelfPermission(requiredPermission) == PackageManager.PERMISSION_GRANTED) {
@@ -186,25 +181,18 @@ fun HomeScreenComposable(navController: NavController){
         var lati :String by remember { mutableStateOf("") }
         var long :String by remember { mutableStateOf("") }
         var currentLocation : GeoPoint by remember { mutableStateOf(GeoPoint(51.05,-0.72)) }
+        val maxHeight = 24.dp
         Surface(
             modifier = Modifier
-                .fillMaxSize()
-                .align(Alignment.BottomCenter)
+                .fillMaxWidth()
+                .align(Alignment.TopCenter)
                 .zIndex(2.0f)
+                //.height(screenHeight)
         ) {
             Column(
-                modifier = Modifier.fillMaxSize(),
-                verticalArrangement = Arrangement.Center,
+                modifier = Modifier.fillMaxWidth(),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth() ,
-                    //verticalArrangement = Arrangement.Top
-                    verticalAlignment = Alignment.Top,
-                ){
-                    TextField(modifier = Modifier.weight(1.0f), value = lati, onValueChange = {lati = it})
-                    TextField(modifier = Modifier.weight(1.0f), value = long, onValueChange = {lati = it})
-                }
                 //This button changes the current location
                 Button(onClick = {
                     currentLocation = GeoPoint(lati.toDouble(),long.toDouble())
@@ -217,17 +205,25 @@ fun HomeScreenComposable(navController: NavController){
                 }) {
                     Text("Click to go to ADD POI")
                 }
-                //Map function
-//                MapComposable(
-//                    mod = Modifier
-//                        .fillMaxSize()
-//                        .zIndex(1.0f),
-//                    longLati =  currentLocation)
             }
         }
+        MapComposable(mod = Modifier
+            .fillMaxWidth(),
+            longLati = currentLocation)
 
     }
 }
+@Composable
+fun GpsPositionComposable( ) {
+
+    var latLon by remember { mutableStateOf(LatLon())}
+
+    LatLonViewModel.liveLatLon.observe(this) {
+        latLon = it
+    }
+    Text("Lat ${latLon.lat} lon ${latLon.lon}")
+}
+
 
 @Composable
 fun MapComposable(mod: Modifier,longLati: GeoPoint){
