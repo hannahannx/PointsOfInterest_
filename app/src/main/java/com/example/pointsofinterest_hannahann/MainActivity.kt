@@ -53,6 +53,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.zIndex
 import androidx.core.content.ContextCompat.checkSelfPermission
+import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.MutableLiveData
 import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
@@ -68,7 +69,6 @@ import androidx.lifecycle.ViewModel
 
 public class MainActivity : ComponentActivity() , LocationListener{
     val latLonViewModel : LatLonViewModel by viewModels()
-
     private fun startGPS() {
         val mgr = getSystemService(LOCATION_SERVICE) as LocationManager
         //CHECKS WHETHER ACCESS FINE LOCATION PERMISSION HAS BEEN GRANTED AT RUNTIME
@@ -94,7 +94,7 @@ public class MainActivity : ComponentActivity() , LocationListener{
 
     //Runs when a new location is received from the provider
     override fun onLocationChanged(location: Location) {
-        LatLonViewModel.LatLon(location.latitude, location.longitude)
+        latLonViewModel.latLon = LatLonViewModel.LatLon(location.latitude, location.longitude)
         }
 
 
@@ -115,6 +115,152 @@ public class MainActivity : ComponentActivity() , LocationListener{
     override fun onStatusChanged(provider: String,status:Int, extras: Bundle){
     }
 
+    //NEED TO PUT THE COMPOSABLE FUNCTIONS INSIDE THE ACTIVITY
+    @Composable
+    fun HomeScreenComposable(navController: NavController){
+        BoxWithConstraints (
+            modifier = Modifier
+                .fillMaxSize()
+                .border(BorderStroke(10.dp, Color.Black))
+                .padding(10.dp)
+        ){
+            var lati :String by remember { mutableStateOf("") }
+            var long :String by remember { mutableStateOf("") }
+            var currentLocation : GeoPoint by remember { mutableStateOf(GeoPoint(51.05,-0.72)) }
+            val maxHeight = 24.dp
+            Surface(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .align(Alignment.TopCenter)
+                    .zIndex(2.0f)
+                //.height(screenHeight)
+            ) {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    //This button changes the current location
+                    Button(onClick = {
+                        currentLocation = GeoPoint(lati.toDouble(),long.toDouble())
+                    }){
+
+                    }
+                    //This button navigates to the ADDPOI SCREEN
+                    Button(onClick = {
+                        navController.navigate("poiScreen")
+                    }) {
+                        Text("Click to go to ADD POI")
+                    }
+                    GpsPosition(latLonViewModel, this@MainActivity)
+                }
+            }
+            MapComposable(mod = Modifier
+                .fillMaxWidth(),
+                longLati = currentLocation)
+
+        }
+    }
+
+    @Composable
+    fun GpsPosition(latLonViewModel: LatLonViewModel, owner: LifecycleOwner) {
+        //this will be the starting postion for the map latitude and longitude
+        var latLon by remember { mutableStateOf(LatLonViewModel.LatLon(51.05, -0.71))}
+        latLonViewModel.liveDataLatLon.observe(owner) {
+            latLon = it
+        }
+        Text("Lat ${latLon.lat} lon ${latLon.lon}")
+    }
+
+    @Composable
+    fun MapComposable(mod: Modifier,longLati: GeoPoint){
+        AndroidView(
+            modifier = mod,
+            factory = { ctx ->
+                // This line sets the user agent, a requirement to download OSM maps
+                org.osmdroid.config.Configuration.getInstance()
+                    .load(ctx, PreferenceManager.getDefaultSharedPreferences(ctx))
+
+                val map1 = MapView(ctx).apply {
+                    setClickable(true)
+                    setMultiTouchControls(true)
+                    setTileSource(TileSourceFactory.MAPNIK)
+                }
+                val marker = Marker(map1)
+                marker.apply {
+                    position = GeoPoint(51.05, -0.72)
+                    title = ("${title}")
+                }
+
+                map1.overlays.add(marker)
+                map1
+            },
+            update = { view ->
+                view.controller.setZoom(14.0)
+                view.controller.setCenter(longLati)
+            }
+        )
+    }
+
+
+
+    //This Screen displays the information tzo add the information which the user writes and apply it tot the SQLite database
+    @Composable
+    fun AddPOIScreenComposable(navController: NavController){
+        var name by remember { mutableStateOf (" ") }
+        var type by remember { mutableStateOf (" ") }
+        var description by remember { mutableStateOf (" ") }
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .border(BorderStroke(10.dp, Color.Black))
+                .padding(20.dp)
+        ){
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ){
+                Text("Add new POI" , fontSize = 40.sp, fontWeight = FontWeight.Bold)
+                OutlinedTextField(value = name, onValueChange = { name = it } , label = {"Name"})
+                Spacer(Modifier.height(10.dp))
+                OutlinedTextField(value = type, onValueChange = { type = it }, label = {"Type"})
+                Spacer(Modifier.height(10.dp))
+                OutlinedTextField(value = description, onValueChange = { description = it }, label = {"Description"})
+                Spacer(Modifier.height(10.dp))
+                //this button should have a label TEXT but currently not working
+                OutlinedButton(onClick = {
+                    //button to click and connect to the database to add the POI to the database
+                    //uses lifecycle
+                }) {
+                    Text("Add")
+                }
+                Text("Small map will go here to show that it has been added")
+                Button(
+                    onClick = {
+                        navController.navigate("settingsScreen")
+                    }){
+                    Text(text = "Click to go to SETTINGS Screen")
+                }
+            }
+        }
+    }
+
+    @Composable
+    fun SettingsScreenComposable(){
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .border(BorderStroke(10.dp, Color.Black))
+                .padding(20.dp)
+        ){
+            Column {
+                Text("This is the settings screen")
+            }
+        }
+    }
+
+
+    //ON CREATE FUNCTION
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
@@ -134,6 +280,7 @@ public class MainActivity : ComponentActivity() , LocationListener{
                             /*When the user clicks the button in the UI, this lambda is called with the new value of geoPoint  from the UI.
                             Inside this lambda, the geoPoint variable is updated to the new value received from the UI*/
                             HomeScreenComposable(navController)
+
                         }
                         composable("poiScreen") {
                             AddPOIScreenComposable(navController)
@@ -171,145 +318,3 @@ public class MainActivity : ComponentActivity() , LocationListener{
     }
 }
 
-//This is the main page which when clicked will navigate to enter the application.
-//Mainly here for testing purposes
-@Composable
-//AddPOIScreen IS a call back function
-fun HomeScreenComposable(navController: NavController){
-    BoxWithConstraints (
-        modifier = Modifier
-            .fillMaxSize()
-            .border(BorderStroke(10.dp, Color.Black))
-            .padding(10.dp)
-    ){
-        var lati :String by remember { mutableStateOf("") }
-        var long :String by remember { mutableStateOf("") }
-        var currentLocation : GeoPoint by remember { mutableStateOf(GeoPoint(51.05,-0.72)) }
-        val maxHeight = 24.dp
-        Surface(
-            modifier = Modifier
-                .fillMaxWidth()
-                .align(Alignment.TopCenter)
-                .zIndex(2.0f)
-                //.height(screenHeight)
-        ) {
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                //This button changes the current location
-                Button(onClick = {
-                    currentLocation = GeoPoint(lati.toDouble(),long.toDouble())
-                }){
-
-                }
-                //This button navigates to the ADDPOI SCREEN
-                Button(onClick = {
-                    navController.navigate("poiScreen")
-                }) {
-                    Text("Click to go to ADD POI")
-                }
-            }
-        }
-        MapComposable(mod = Modifier
-            .fillMaxWidth(),
-            longLati = currentLocation)
-
-    }
-}
-
-@Composable
-fun MapComposable(mod: Modifier,longLati: GeoPoint){
-    AndroidView(
-        modifier = mod,
-        factory = { ctx ->
-            // This line sets the user agent, a requirement to download OSM maps
-            org.osmdroid.config.Configuration.getInstance()
-                .load(ctx, PreferenceManager.getDefaultSharedPreferences(ctx))
-
-            val map1 = MapView(ctx).apply {
-                setClickable(true)
-                setMultiTouchControls(true)
-                setTileSource(TileSourceFactory.MAPNIK)
-            }
-            val marker = Marker(map1)
-            marker.apply {
-                position = GeoPoint(51.05, -0.72)
-                title = "Start Position"
-            }
-
-            map1.overlays.add(marker)
-            map1
-        },
-        update = { view ->
-            view.controller.setZoom(14.0)
-            view.controller.setCenter(longLati)
-        }
-    )
-}
-
-@Composable
-fun GpsPositionComposable( ) {
-    //this will be the starting postion for the map latitude and longitude
-    var latLon by remember { mutableStateOf(LatLonViewModel.LatLon(51.05, -0.71))}
-    LatLonViewModel.liveDataLatLon.observe(this) {
-        latLon = it
-   }
-    Text("Lat ${latLon.lat} lon ${latLon.lon}")
-}
-
-//This Screen displays the information tzo add the information which the user writes and apply it tot the SQLite database
-@Composable
-fun AddPOIScreenComposable(navController: NavController){
-    var name by remember { mutableStateOf (" ") }
-    var type by remember { mutableStateOf (" ") }
-    var description by remember { mutableStateOf (" ") }
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .border(BorderStroke(10.dp, Color.Black))
-            .padding(20.dp)
-    ){
-        Column(
-            modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally
-        ){
-            Text("Add new POI" , fontSize = 40.sp, fontWeight = FontWeight.Bold)
-            OutlinedTextField(value = name, onValueChange = { name = it } , label = {"Name"})
-            Spacer(Modifier.height(10.dp))
-            OutlinedTextField(value = type, onValueChange = { type = it }, label = {"Type"})
-            Spacer(Modifier.height(10.dp))
-            OutlinedTextField(value = description, onValueChange = { description = it }, label = {"Description"})
-            Spacer(Modifier.height(10.dp))
-            //this button should have a label TEXT but currently not working
-            OutlinedButton(onClick = {
-                //button to click and connect to the database to add the POI to the database
-                //uses lifecycle
-            }) {
-                Text("Add")
-            }
-            Text("Small map will go here to show that it has been added")
-            Button(
-                onClick = {
-                navController.navigate("settingsScreen")
-            }){
-                Text(text = "Click to go to SETTINGS Screen")
-            }
-        }
-        }
-    }
-
-@Composable
-fun SettingsScreenComposable(){
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .border(BorderStroke(10.dp, Color.Black))
-            .padding(20.dp)
-    ){
-        Column {
-                Text("This is the settings screen")
-        }
-    }
-}
