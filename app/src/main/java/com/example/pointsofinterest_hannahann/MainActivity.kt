@@ -15,6 +15,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -106,36 +107,34 @@ public class MainActivity : ComponentActivity() , LocationListener{
     override fun onStatusChanged(provider: String,status:Int, extras: Bundle){
     }
 
+
     //NEED TO PUT THE COMPOSABLE FUNCTIONS INSIDE THE ACTIVITY
     @Composable
     fun HomeScreenComposable(navController: NavController){
-        BoxWithConstraints (
-            modifier = Modifier
-                .fillMaxSize()
-                .border(BorderStroke(10.dp, Color.Black))
-                .padding(10.dp)
-        ){
             Surface(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .align(Alignment.TopCenter)
-                    .zIndex(2.0f)
+                    .fillMaxWidth(),
+                    color = MaterialTheme.colorScheme.background
             ) {
                 Column(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    //This button navigates to the ADDPOI SCREEN
-                    Button(onClick = {
-                        navController.navigate("poiScreen")
-                    }) {
-                        Text("Click to go to ADD POI")
+                    Column(modifier = Modifier.zIndex(2.0f)){
+                        //This button navigates to the ADDPOI SCREEN
+                        Button(onClick = {
+                            navController.navigate("poiScreen")
+                        }) {
+                            Text("Click to go to ADD POI")
+                        }
+                        GpsPosition(latLonViewModel, this@MainActivity)
                     }
-                    GpsPosition(latLonViewModel, this@MainActivity)
+                    MapComposable(mod = Modifier.fillMaxWidth()
+                        , latLonViewModel , owner = this@MainActivity)
                 }
             }
         }
-    }
+
 
     @Composable
     fun GpsPosition(latLonViewModel: LatLonViewModel, owner: LifecycleOwner) {
@@ -145,7 +144,6 @@ public class MainActivity : ComponentActivity() , LocationListener{
             latLon = it
         }
         Text("Lat ${latLon.lat} lon ${latLon.lon}")
-        MapComposable(mod = Modifier.fillMaxHeight(), latLonViewModel, this@MainActivity)
     }
 
     @Composable
@@ -166,6 +164,7 @@ public class MainActivity : ComponentActivity() , LocationListener{
             },
             update = { view ->
                 view.controller.setZoom(14.0)
+                view.controller.setCenter(GeoPoint(50.9,-0.5))
             }
         )
     }
