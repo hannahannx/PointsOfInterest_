@@ -1,3 +1,5 @@
+@file:Suppress("DEPRECATION")
+
 package com.example.pointsofinterest_hannahann
 
 import android.Manifest
@@ -19,6 +21,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -86,7 +89,6 @@ public class MainActivity : ComponentActivity() , LocationListener{
         latLonViewModel.latLon = LatLonViewModel.LatLon(location.latitude, location.longitude)
         }
 
-
     //When you physically disable or enable the GPS from device
     //run a specific behaviour to occur when the user switches the GPS ON and OFF
     //write this information here
@@ -118,7 +120,6 @@ public class MainActivity : ComponentActivity() , LocationListener{
                     .fillMaxWidth()
                     .align(Alignment.TopCenter)
                     .zIndex(2.0f)
-                //.height(screenHeight)
             ) {
                 Column(
                     modifier = Modifier.fillMaxWidth(),
@@ -133,12 +134,6 @@ public class MainActivity : ComponentActivity() , LocationListener{
                     GpsPosition(latLonViewModel, this@MainActivity)
                 }
             }
-            MapComposable(
-                mod = Modifier
-                .fillMaxWidth(),
-                latLonViewModel,
-                this@MainActivity)
-
         }
     }
 
@@ -150,7 +145,7 @@ public class MainActivity : ComponentActivity() , LocationListener{
             latLon = it
         }
         Text("Lat ${latLon.lat} lon ${latLon.lon}")
-        MapComposable(mod = Modifier.fillMaxWidth(), latLonViewModel, this@MainActivity)
+        MapComposable(mod = Modifier.fillMaxHeight(), latLonViewModel, this@MainActivity)
     }
 
     @Composable
@@ -171,7 +166,6 @@ public class MainActivity : ComponentActivity() , LocationListener{
             },
             update = { view ->
                 view.controller.setZoom(14.0)
-                view.controller.setCenter(0)
             }
         )
     }
