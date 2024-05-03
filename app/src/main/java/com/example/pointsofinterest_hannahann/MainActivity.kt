@@ -61,7 +61,7 @@ import androidx.lifecycle.ViewModel
 
 
 public class MainActivity : ComponentActivity() , LocationListener{
-    val latLonViewModel : LatLonViewModel by viewModels()
+    private val latLonViewModel : LatLonViewModel by viewModels()
     private fun startGPS() {
         val mgr = getSystemService(LOCATION_SERVICE) as LocationManager
         //CHECKS WHETHER ACCESS FINE LOCATION PERMISSION HAS BEEN GRANTED AT RUNTIME
@@ -111,29 +111,29 @@ public class MainActivity : ComponentActivity() , LocationListener{
     //NEED TO PUT THE COMPOSABLE FUNCTIONS INSIDE THE ACTIVITY
     @Composable
     fun HomeScreenComposable(navController: NavController){
+        Column {
             Surface(
                 modifier = Modifier
+                     .zIndex(2.0f)
                     .fillMaxWidth(),
-                    color = MaterialTheme.colorScheme.background
+                color = MaterialTheme.colorScheme.background
             ) {
                 Column(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Column(modifier = Modifier.zIndex(2.0f)){
-                        //This button navigates to the ADDPOI SCREEN
-                        Button(onClick = {
-                            navController.navigate("poiScreen")
-                        }) {
-                            Text("Click to go to ADD POI")
-                        }
-                        GpsPosition(latLonViewModel, this@MainActivity)
+                    GpsPosition(latLonViewModel, this@MainActivity)
+                    //This button navigates to the ADDPOI SCREEN
+                    Button(onClick = {
+                        navController.navigate("poiScreen")
+                    }) {
+                        Text("Click to go to ADD POI")
                     }
-                    MapComposable(mod = Modifier.fillMaxWidth()
-                        , latLonViewModel , owner = this@MainActivity)
                 }
             }
+            MapComposable(mod = Modifier.fillMaxWidth(), latLonViewModel, owner = this@MainActivity)
         }
+    }
 
 
     @Composable
@@ -143,7 +143,8 @@ public class MainActivity : ComponentActivity() , LocationListener{
         latLonViewModel.liveDataLatLon.observe(owner) {
             latLon = it
         }
-        Text("Lat ${latLon.lat} lon ${latLon.lon}")
+        var currentlat = latLon.lat
+        var currentlon = latLon.lon
     }
 
     @Composable
