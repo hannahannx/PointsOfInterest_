@@ -88,7 +88,7 @@ public class MainActivity : ComponentActivity() , LocationListener{
     //Runs when a new location is received from the provider
     override fun onLocationChanged(location: Location) {
         latLonViewModel.latLon = LatLonViewModel.LatLon(location.latitude, location.longitude)
-        }
+    }
 
     //When you physically disable or enable the GPS from device
     //run a specific behaviour to occur when the user switches the GPS ON and OFF
@@ -110,7 +110,7 @@ public class MainActivity : ComponentActivity() , LocationListener{
 
     //NEED TO PUT THE COMPOSABLE FUNCTIONS INSIDE THE ACTIVITY
     @Composable
-    fun HomeScreenComposable(navController: NavController){
+    fun HomeScreenComposable(navController: NavController,latLonViewModel: LatLonViewModel ){
         Column {
             Surface(
                 modifier = Modifier
@@ -131,10 +131,11 @@ public class MainActivity : ComponentActivity() , LocationListener{
                     }
                 }
             }
-            MapComposable(mod = Modifier.fillMaxWidth(), latLonViewModel, owner = this@MainActivity)
+            MapComposable(mod = Modifier.fillMaxWidth(),
+                                latLonViewModel ,
+                                owner = this@MainActivity)
         }
     }
-
 
     @Composable
     fun GpsPosition(latLonViewModel: LatLonViewModel, owner: LifecycleOwner) {
@@ -143,12 +144,10 @@ public class MainActivity : ComponentActivity() , LocationListener{
         latLonViewModel.liveDataLatLon.observe(owner) {
             latLon = it
         }
-        var currentlat = latLon.lat
-        var currentlon = latLon.lon
     }
 
     @Composable
-    fun MapComposable(mod: Modifier, latLonViewModel: LatLonViewModel,owner: LifecycleOwner){
+    fun MapComposable(mod: Modifier, latLonViewModel: LatLonViewModel, owner: LifecycleOwner){
         AndroidView(
             modifier = mod,
             factory = { ctx ->
@@ -160,14 +159,21 @@ public class MainActivity : ComponentActivity() , LocationListener{
                     setClickable(true)
                     setMultiTouchControls(true)
                     setTileSource(TileSourceFactory.MAPNIK)
+                    val opentopomap = true
+                    setTileSource( if (opentopomap) TileSourceFactory.OpenTopo else TileSourceFactory.MAPNIK )
+
                 }
                 map1
-            },
-            update = { view ->
-                view.controller.setZoom(14.0)
-                view.controller.setCenter(GeoPoint(50.9,-0.5))
             }
-        )
+        ) { view ->
+            view.controller.setZoom(15.0)
+            view.controller.setCenter(
+                GeoPoint(
+                    latLonViewModel.latLon.lat,
+                    latLonViewModel.latLon.lon
+                )
+            )
+        }
     }
 
     //This Screen displays the information to add the information which the user writes and apply it tot the SQLite database
@@ -245,7 +251,7 @@ public class MainActivity : ComponentActivity() , LocationListener{
                         composable("homeScreen") {
                             /*When the user clicks the button in the UI, this lambda is called with the new value of geoPoint  from the UI.
                             Inside this lambda, the geoPoint variable is updated to the new value received from the UI*/
-                            HomeScreenComposable(navController)
+                            HomeScreenComposable(navController, latLonViewModel)
                         }
                         composable("poiScreen") {
                             AddPOIScreenComposable(navController)
@@ -255,7 +261,6 @@ public class MainActivity : ComponentActivity() , LocationListener{
                         }
                     }
                     //FUNCTIONS TO BE CALLED WOULD BE INSIDE HERE
-
                 }
             }
         }
