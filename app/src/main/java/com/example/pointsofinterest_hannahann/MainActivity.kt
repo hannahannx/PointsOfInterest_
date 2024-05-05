@@ -3,6 +3,7 @@
 package com.example.pointsofinterest_hannahann
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.content.pm.PackageManager
 import android.location.Location
 import android.location.LocationListener
@@ -32,6 +33,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -62,6 +64,7 @@ import androidx.lifecycle.ViewModel
 
 public class MainActivity : ComponentActivity() , LocationListener{
     private val latLonViewModel : LatLonViewModel by viewModels()
+    @SuppressLint("MissingPermission")
     private fun startGPS() {
         val mgr = getSystemService(LOCATION_SERVICE) as LocationManager
         //CHECKS WHETHER ACCESS FINE LOCATION PERMISSION HAS BEEN GRANTED AT RUNTIME
@@ -110,11 +113,11 @@ public class MainActivity : ComponentActivity() , LocationListener{
 
     //NEED TO PUT THE COMPOSABLE FUNCTIONS INSIDE THE ACTIVITY
     @Composable
-    fun HomeScreenComposable(navController: NavController,latLonViewModel: LatLonViewModel ){
+    fun HomeScreenComposable(navController: NavController,latLonViewModel: LatLonViewModel){
         Column {
             Surface(
                 modifier = Modifier
-                     .zIndex(2.0f)
+                    .zIndex(2.0f)
                     .fillMaxWidth(),
                 color = MaterialTheme.colorScheme.background
             ) {
@@ -140,14 +143,15 @@ public class MainActivity : ComponentActivity() , LocationListener{
     @Composable
     fun GpsPosition(latLonViewModel: LatLonViewModel, owner: LifecycleOwner) {
         //this will be the starting postion for the map latitude and longitude when the GPS starts
-        var latLon by remember { mutableStateOf(LatLonViewModel.LatLon(51.05, -0.75))}
+        var latLon by remember { mutableStateOf(LatLonViewModel.LatLon())}
         latLonViewModel.liveDataLatLon.observe(owner) {
-            latLon = it
+            var latLon = it
         }
     }
 
     @Composable
-    fun MapComposable(mod: Modifier, latLonViewModel: LatLonViewModel, owner: LifecycleOwner){
+    fun MapComposable(mod: Modifier, latLonViewModel: LatLonViewModel,owner: LifecycleOwner){
+        var latLon by remember { mutableStateOf(LatLonViewModel.LatLon())}
         AndroidView(
             modifier = mod,
             factory = { ctx ->
@@ -159,20 +163,20 @@ public class MainActivity : ComponentActivity() , LocationListener{
                     setClickable(true)
                     setMultiTouchControls(true)
                     setTileSource(TileSourceFactory.MAPNIK)
-                    val opentopomap = true
+                    var opentopomap = true
                     setTileSource( if (opentopomap) TileSourceFactory.OpenTopo else TileSourceFactory.MAPNIK )
-
                 }
+                val marker = Marker(map1)
+                marker.apply {
+                    title = "This is a test"
+                    position = GeoPoint(50.8,-0.75)
+                }
+                map1.overlays.add(marker)
                 map1
             }
         ) { view ->
             view.controller.setZoom(15.0)
-            view.controller.setCenter(
-                GeoPoint(
-                    latLonViewModel.latLon.lat,
-                    latLonViewModel.latLon.lon
-                )
-            )
+            view.controller.setCenter(GeoPoint(LatLonViewModel.LatLon()))
         }
     }
 
