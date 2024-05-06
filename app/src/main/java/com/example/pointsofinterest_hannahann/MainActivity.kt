@@ -16,15 +16,12 @@ import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -34,7 +31,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -51,7 +47,6 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.zIndex
 import androidx.core.content.ContextCompat.checkSelfPermission
 import androidx.lifecycle.LifecycleOwner
-import androidx.lifecycle.MutableLiveData
 import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -61,7 +56,7 @@ import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
 import com.example.pointsofinterest_hannahann.ui.theme.PointsOfInterest_hannahannTheme
 import org.osmdroid.views.overlay.Marker
-import androidx.lifecycle.ViewModel
+import androidx.lifecycle.*
 
 
 public class MainActivity : ComponentActivity() , LocationListener{
@@ -78,13 +73,6 @@ public class MainActivity : ComponentActivity() , LocationListener{
                 android.Manifest.permission.ACCESS_COARSE_LOCATION
             ) != PackageManager.PERMISSION_GRANTED
         ) {
-            // TODO: Consider calling
-            //    ActivityCompat#requestPermissions
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for ActivityCompat#requestPermissions for more details.
             return
         }
         mgr.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0f, this)
@@ -116,36 +104,44 @@ public class MainActivity : ComponentActivity() , LocationListener{
     //NEED TO PUT THE COMPOSABLE FUNCTIONS INSIDE THE ACTIVITY
     @Composable
     fun HomeScreenComposable(navController: NavController,latLonViewModel: LatLonViewModel){
-        Column {
-            Surface(
-                modifier = Modifier
-                    .zIndex(2.0f)
-                    .fillMaxWidth(),
-                color = MaterialTheme.colorScheme.background
-            ) {
-                Column(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalAlignment = Alignment.CenterHorizontally
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .border(BorderStroke(10.dp, Color.Black))
+                .padding(20.dp)
+        ) {
+            Column {
+                Surface(
+                    modifier = Modifier
+                        .zIndex(2.0f)
+                        .fillMaxWidth(),
+                    color = MaterialTheme.colorScheme.background
                 ) {
-                    GpsPosition(latLonViewModel, this@MainActivity)
-                    //This button navigates to the ADDPOI SCREEN
-                    Row {
-                        Button(onClick = {
-                            navController.navigate("poiScreen")
-                        }) {
-                            Text("Add POI Screen")
-                        }
-                        Button(onClick = {
-                            navController.navigate("settingsScreen")
-                        }) {
-                            Text("Settings Screen")
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        GpsPosition(latLonViewModel, this@MainActivity)
+                        //This button navigates to the ADDPOI SCREEN
+                        Row {
+                            Button(onClick = {
+                                navController.navigate("poiScreen")
+                            }) {
+                                Text("Add POI Screen")
+                            }
+                            Button(onClick = {
+                                navController.navigate("settingsScreen")
+                            }) {
+                                Text("Settings Screen")
+                            }
                         }
                     }
                 }
+                MapComposable(
+                    mod = Modifier.fillMaxWidth(),
+                    latLonViewModel,
+                    owner = this@MainActivity,markerToMap = true)
             }
-            MapComposable(mod = Modifier.fillMaxWidth(),
-                                latLonViewModel ,
-                                owner = this@MainActivity)
         }
     }
 
@@ -159,7 +155,7 @@ public class MainActivity : ComponentActivity() , LocationListener{
     }
 
     @Composable
-    fun MapComposable(mod: Modifier, latLonViewModel: LatLonViewModel,owner: LifecycleOwner){
+    fun MapComposable(mod: Modifier, latLonViewModel: LatLonViewModel,owner: LifecycleOwner,markerToMap:Boolean){
         AndroidView(
             modifier = mod,
             factory = { ctx ->
@@ -168,16 +164,23 @@ public class MainActivity : ComponentActivity() , LocationListener{
                     .load(ctx, PreferenceManager.getDefaultSharedPreferences(ctx))
 
                 val map1 = MapView(ctx).apply {
-                    setClickable(true)
+                    isClickable = true
                     setMultiTouchControls(true)
                     setTileSource(TileSourceFactory.MAPNIK)
                     var opentopomap = true
-                    setTileSource( if (opentopomap) TileSourceFactory.OpenTopo else TileSourceFactory.MAPNIK )
+                    //setTileSource( if (opentopomap) TileSourceFactory.OpenTopo else TileSourceFactory.MAPNIK )
                 }
-
                 map1
             }
         ) { view ->
+            if (markerToMap){
+                val marker = Marker(view)
+                marker.apply {
+                    position = GeoPoint(latLonViewModel.latLon.lat,latLonViewModel.latLon.lon)
+                    //title = "Name: ${name},Type: ${type}, Description: ${description}"
+                }
+                view.overlays.add(marker)
+            }
             view.controller.setZoom(17.0)
             view.controller.setCenter(GeoPoint(latLonViewModel.latLon.lat,latLonViewModel.latLon.lon))
         }
@@ -187,9 +190,10 @@ public class MainActivity : ComponentActivity() , LocationListener{
     //This Screen displays the information to add the information which the user writes and apply it tot the SQLite database
     @Composable
     fun AddPOIScreenComposable(navController: NavController){
-        var name by remember { mutableStateOf (" ") }
-        var type by remember { mutableStateOf (" ") }
-        var description by remember { mutableStateOf (" ") }
+        var name by remember { mutableStateOf ("") }
+        var type by remember { mutableStateOf ("") }
+        var description by remember { mutableStateOf ("") }
+        var markerToMap by remember { mutableStateOf(false) }
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -202,19 +206,19 @@ public class MainActivity : ComponentActivity() , LocationListener{
                 horizontalAlignment = Alignment.CenterHorizontally
             ){
                 Text("Add new POI" , fontSize = 40.sp, fontWeight = FontWeight.Bold)
-                OutlinedTextField(value = name, onValueChange = { name = it } , label = {"Name"})
+                OutlinedTextField(value = name, onValueChange = { name = it }, label = {Text("Name")})
                 Spacer(Modifier.height(10.dp))
-                OutlinedTextField(value = type, onValueChange = { type = it }, label = {"Type"})
+                OutlinedTextField(value = type, onValueChange = { type = it }, label = {Text("Type")})
                 Spacer(Modifier.height(10.dp))
-                OutlinedTextField(value = description, onValueChange = { description = it }, label = {"Description"})
+                OutlinedTextField(value = description, onValueChange = { description = it }, label = {Text("Description")})
                 Spacer(Modifier.height(10.dp))
-                //this button should have a label TEXT but currently not working
                 OutlinedButton(onClick = {
+                    markerToMap = true
+                }
+                ) {
+                    Text("Add to Map")
                     //button to click and connect to the database to add the POI to the database
                     //uses lifecycle
-
-                }) {
-                    Text("Add")
                 }
                 Text("Small map will go here to show that it has been added")
                 Row {
@@ -234,16 +238,6 @@ public class MainActivity : ComponentActivity() , LocationListener{
                 }
             }
         }
-    }
-    @Composable
-    fun AddPOIButton(onClick: () -> Unit){
-        //takes the current location of the view model live data
-        OutlinedButton(onClick = onClick) {
-            //button logic
-            Text("Add to Map")
-        }
-        //updates the update function in the map and adds a marker to it
-        //would have to use lifecycle
     }
 
     @Composable
@@ -334,5 +328,4 @@ public class MainActivity : ComponentActivity() , LocationListener{
         }
     }
 }
-
 
