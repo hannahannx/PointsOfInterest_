@@ -31,6 +31,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -62,7 +63,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 
-public class MainActivity : ComponentActivity() , LocationListener{
+class MainActivity : ComponentActivity() , LocationListener{
     private val latLonViewModel : LatLonViewModel by viewModels()
     lateinit var db: POIDatabase
 
@@ -72,10 +73,10 @@ public class MainActivity : ComponentActivity() , LocationListener{
         //CHECKS WHETHER ACCESS FINE LOCATION PERMISSION HAS BEEN GRANTED AT RUNTIME
         if (checkSelfPermission(
                 this,
-                android.Manifest.permission.ACCESS_FINE_LOCATION
+                Manifest.permission.ACCESS_FINE_LOCATION
             ) != PackageManager.PERMISSION_GRANTED && checkSelfPermission(
                 this,
-                android.Manifest.permission.ACCESS_COARSE_LOCATION
+                Manifest.permission.ACCESS_COARSE_LOCATION
             ) != PackageManager.PERMISSION_GRANTED
         ) {
             return
@@ -182,7 +183,7 @@ public class MainActivity : ComponentActivity() , LocationListener{
                 val marker = Marker(view)
                 marker.apply {
                     position = GeoPoint(latLonViewModel.latLon.lat,latLonViewModel.latLon.lon)
-                    //title = "Name: ${name},Type: ${type}, Description: ${description}"
+                    title = ""
                 }
                 view.overlays.add(marker)
             }
@@ -218,6 +219,8 @@ public class MainActivity : ComponentActivity() , LocationListener{
                 OutlinedTextField(value = description, onValueChange = { description = it }, label = {Text("Description")})
                 Spacer(Modifier.height(10.dp))
                 OutlinedButton(onClick = {
+                    //button to click and connect to the database to add the POI to the database
+                    //uses lifecycle
                     markerToMap = true
                     lifecycleScope.launch {
                         withContext(Dispatchers.IO){
@@ -228,10 +231,7 @@ public class MainActivity : ComponentActivity() , LocationListener{
                 }
                 ) {
                     Text("Add to Map")
-                    //button to click and connect to the database to add the POI to the database
-                    //uses lifecycle
                 }
-                Text("Small map will go here to show that it has been added")
                 Row {
                     Button(
                         onClick = {
@@ -253,6 +253,8 @@ public class MainActivity : ComponentActivity() , LocationListener{
 
     @Composable
     fun SettingsScreenComposable(navController: NavController){
+        var uploaded by remember { mutableStateOf(false)}
+        var gpsStatus by remember { mutableStateOf(true)}
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -264,7 +266,25 @@ public class MainActivity : ComponentActivity() , LocationListener{
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally
             ){
-                Text("Settings screen")
+                Text("Settings" , fontSize = 40.sp, fontWeight = FontWeight.Bold)
+                Spacer(Modifier.height(10.dp))
+                Row {
+                    Text("Uploaded to Web " , fontSize = 30.sp, fontWeight = FontWeight.Thin)
+                    Switch(checked = uploaded,
+                        onCheckedChange = {
+                            uploaded = it
+                        }
+                    )
+                }
+                Spacer(Modifier.height(10.dp))
+                Row{
+                    Text("GPS " , fontSize = 30.sp, fontWeight = FontWeight.Thin)
+                    Switch(checked = gpsStatus,
+                        onCheckedChange = {
+                            gpsStatus = it
+                        }
+                    )
+                }
                 Row {
                     Button(
                         onClick = {
