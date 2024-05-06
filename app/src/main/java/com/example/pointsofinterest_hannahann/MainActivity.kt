@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
@@ -128,10 +129,17 @@ public class MainActivity : ComponentActivity() , LocationListener{
                 ) {
                     GpsPosition(latLonViewModel, this@MainActivity)
                     //This button navigates to the ADDPOI SCREEN
-                    Button(onClick = {
-                        navController.navigate("poiScreen")
-                    }) {
-                        Text("Click to go to ADD POI")
+                    Row {
+                        Button(onClick = {
+                            navController.navigate("poiScreen")
+                        }) {
+                            Text("Add POI Screen")
+                        }
+                        Button(onClick = {
+                            navController.navigate("settingsScreen")
+                        }) {
+                            Text("Settings Screen")
+                        }
                     }
                 }
             }
@@ -209,26 +217,64 @@ public class MainActivity : ComponentActivity() , LocationListener{
                     Text("Add")
                 }
                 Text("Small map will go here to show that it has been added")
-                Button(
-                    onClick = {
-                        navController.navigate("settingsScreen")
-                    }){
-                    Text(text = "Click to go to SETTINGS Screen")
+                Row {
+                    Button(
+                        onClick = {
+                            navController.popBackStack()
+                        }
+                    ){
+                        Text(text = "Home Screen")
+                    }
+                    Button(
+                        onClick = {
+                            navController.navigate("settingsScreen")
+                        }) {
+                        Text(text = "Settings Screen")
+                    }
                 }
             }
         }
     }
+    @Composable
+    fun AddPOIButton(onClick: () -> Unit){
+        //takes the current location of the view model live data
+        OutlinedButton(onClick = onClick) {
+            //button logic
+            Text("Add to Map")
+        }
+        //updates the update function in the map and adds a marker to it
+        //would have to use lifecycle
+    }
 
     @Composable
-    fun SettingsScreenComposable(){
+    fun SettingsScreenComposable(navController: NavController){
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .border(BorderStroke(10.dp, Color.Black))
                 .padding(20.dp)
         ){
-            Column {
-                Text("This is the settings screen")
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ){
+                Text("Settings screen")
+                Row {
+                    Button(
+                        onClick = {
+                            navController.popBackStack()
+                        }
+                    ){
+                        Text(text = "Add POI Screen")
+                    }
+                    Button(
+                        onClick = {
+                            navController.navigate("homeScreen") {popUpTo("homeScreen")}
+                        }) {
+                        Text(text = "Home Screen")
+                    }
+                }
             }
         }
     }
@@ -258,7 +304,7 @@ public class MainActivity : ComponentActivity() , LocationListener{
                             AddPOIScreenComposable(navController)
                         }
                         composable("settingsScreen"){
-                            SettingsScreenComposable()
+                            SettingsScreenComposable(navController)
                         }
                     }
                     //FUNCTIONS TO BE CALLED WOULD BE INSIDE HERE
