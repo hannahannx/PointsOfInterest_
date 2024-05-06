@@ -50,6 +50,7 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.zIndex
 import androidx.core.content.ContextCompat.checkSelfPermission
 import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.MutableLiveData
 import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -151,7 +152,6 @@ public class MainActivity : ComponentActivity() , LocationListener{
 
     @Composable
     fun MapComposable(mod: Modifier, latLonViewModel: LatLonViewModel,owner: LifecycleOwner){
-        var latLon by remember { mutableStateOf(LatLonViewModel.LatLon())}
         AndroidView(
             modifier = mod,
             factory = { ctx ->
@@ -166,18 +166,14 @@ public class MainActivity : ComponentActivity() , LocationListener{
                     var opentopomap = true
                     setTileSource( if (opentopomap) TileSourceFactory.OpenTopo else TileSourceFactory.MAPNIK )
                 }
-                val marker = Marker(map1)
-                marker.apply {
-                    title = "This is a test"
-                    position = GeoPoint(50.8,-0.75)
-                }
-                map1.overlays.add(marker)
+
                 map1
             }
         ) { view ->
-            view.controller.setZoom(15.0)
-            view.controller.setCenter(GeoPoint(LatLonViewModel.LatLon()))
+            view.controller.setZoom(17.0)
+            view.controller.setCenter(GeoPoint(latLonViewModel.latLon.lat,latLonViewModel.latLon.lon))
         }
+        GpsPosition(latLonViewModel, owner= this)
     }
 
     //This Screen displays the information to add the information which the user writes and apply it tot the SQLite database
@@ -208,6 +204,7 @@ public class MainActivity : ComponentActivity() , LocationListener{
                 OutlinedButton(onClick = {
                     //button to click and connect to the database to add the POI to the database
                     //uses lifecycle
+
                 }) {
                     Text("Add")
                 }
