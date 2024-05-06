@@ -1,6 +1,7 @@
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
+    id ("com.google.devtools.ksp")
 }
 
 android {
@@ -64,6 +65,10 @@ dependencies {
     implementation ("org.osmdroid:osmdroid-android:6.1.17")
     //VIEW MODEL
     implementation ("androidx.lifecycle:lifecycle-runtime-ktx:2.5.1")
+    //ROOM N KSP
+    implementation("androidx.room:room-runtime:2.6.1")
+    implementation("androidx.room:room-ktx:2.6.1")
+    ksp("androidx.room:room-compiler:2.6.1")
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.1.5")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")

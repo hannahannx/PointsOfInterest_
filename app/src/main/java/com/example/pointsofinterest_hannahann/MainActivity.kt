@@ -57,10 +57,15 @@ import org.osmdroid.views.MapView
 import com.example.pointsofinterest_hannahann.ui.theme.PointsOfInterest_hannahannTheme
 import org.osmdroid.views.overlay.Marker
 import androidx.lifecycle.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 
 public class MainActivity : ComponentActivity() , LocationListener{
     private val latLonViewModel : LatLonViewModel by viewModels()
+    lateinit var db: POIDatabase
+
     @SuppressLint("MissingPermission")
     private fun startGPS() {
         val mgr = getSystemService(LOCATION_SERVICE) as LocationManager
@@ -147,7 +152,7 @@ public class MainActivity : ComponentActivity() , LocationListener{
 
     @Composable
     fun GpsPosition(latLonViewModel: LatLonViewModel, owner: LifecycleOwner) {
-        //this will be the starting postion for the map latitude and longitude when the GPS starts
+        //this will be the starting position for the map latitude and longitude when the GPS starts
         var latLon by remember { mutableStateOf(LatLonViewModel.LatLon())}
         latLonViewModel.liveDataLatLon.observe(owner) {
             var latLon = it
@@ -214,6 +219,12 @@ public class MainActivity : ComponentActivity() , LocationListener{
                 Spacer(Modifier.height(10.dp))
                 OutlinedButton(onClick = {
                     markerToMap = true
+                    lifecycleScope.launch {
+                        withContext(Dispatchers.IO){
+                            val newPOI = POI(0,7, name, type, description,latLonViewModel.latLon.lat,latLonViewModel.latLon.lon)
+                            db.poiDao().add(newPOI)
+                        }
+                    }
                 }
                 ) {
                     Text("Add to Map")
@@ -277,6 +288,8 @@ public class MainActivity : ComponentActivity() , LocationListener{
     //ON CREATE FUNCTION
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        db = POIDatabase.getDatabase(application)
         setContent {
             PointsOfInterest_hannahannTheme {
                 // A surface container using the 'background' color from the theme
