@@ -68,7 +68,7 @@ class MainActivity : ComponentActivity() , LocationListener{
     lateinit var db: POIDatabase
 
     @SuppressLint("MissingPermission")
-    private fun startGPS() {
+    fun startGPS() {
         val mgr = getSystemService(LOCATION_SERVICE) as LocationManager
         //CHECKS WHETHER ACCESS FINE LOCATION PERMISSION HAS BEEN GRANTED AT RUNTIME
         if (checkSelfPermission(
@@ -174,7 +174,7 @@ class MainActivity : ComponentActivity() , LocationListener{
                     setMultiTouchControls(true)
                     setTileSource(TileSourceFactory.MAPNIK)
                     var opentopomap = true
-                    //setTileSource( if (opentopomap) TileSourceFactory.OpenTopo else TileSourceFactory.MAPNIK )
+                    setTileSource( if (opentopomap) TileSourceFactory.OpenTopo else TileSourceFactory.MAPNIK )
                 }
                 map1
             }
@@ -266,6 +266,16 @@ class MainActivity : ComponentActivity() , LocationListener{
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally
             ){
+                if (gpsStatus) {
+                    onProviderEnabled("")
+                } else {
+                    onProviderDisabled("")
+                }
+                if (uploaded){
+                    Toast.makeText(applicationContext, "Uploading to web enabled", Toast.LENGTH_SHORT).show()
+                } else {
+                    Toast.makeText(applicationContext, "Uploading to web disabled", Toast.LENGTH_SHORT).show()
+                }
                 Text("Settings" , fontSize = 40.sp, fontWeight = FontWeight.Bold)
                 Spacer(Modifier.height(10.dp))
                 Row {
@@ -346,7 +356,6 @@ class MainActivity : ComponentActivity() , LocationListener{
         val requiredPermission = Manifest.permission.ACCESS_FINE_LOCATION
 
         if(checkSelfPermission(requiredPermission) == PackageManager.PERMISSION_GRANTED) {
-            startGPS() // a function to start the GPS - see below
         } else {
             // Request the permission
             val permissionLauncher = registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
