@@ -71,17 +71,20 @@ class MainActivity : ComponentActivity() , LocationListener{
     @SuppressLint("MissingPermission")
     fun startGPS(gpsRunning:Boolean) {
         val mgr = getSystemService(LOCATION_SERVICE) as LocationManager
-        //CHECKS WHETHER ACCESS FINE LOCATION PERMISSION HAS BEEN GRANTED AT RUNTIME
-        if (checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
-            != PackageManager.PERMISSION_GRANTED && checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION)
-            != PackageManager.PERMISSION_GRANTED) {
-            return
-        }
+
         if (gpsRunning) {
+            //CHECKS WHETHER ACCESS FINE LOCATION PERMISSION HAS BEEN GRANTED AT RUNTIME
+            if (checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+                != PackageManager.PERMISSION_GRANTED && checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION)
+                != PackageManager.PERMISSION_GRANTED) {
+                return
+            }
             mgr.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0f, this)
         } else{
-            mgr.removeUpdates(LocationListener {  })
+            mgr.removeUpdates(this)
         }
+
+
 
     }
 
@@ -129,6 +132,7 @@ class MainActivity : ComponentActivity() , LocationListener{
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         GpsPosition(latLonViewModel, this@MainActivity)
+                        GpsStatusComposable(latLonViewModel, this@MainActivity)
                         //This button navigates to the ADDPOI SCREEN
                         Row {
                             Button(onClick = {
@@ -261,7 +265,6 @@ class MainActivity : ComponentActivity() , LocationListener{
     @Composable
     fun SettingsScreenComposable(navController: NavController){
         var uploaded by remember { mutableStateOf(false)}
-        var gpsStatus by remember { mutableStateOf(true)}
         Box(
             modifier = Modifier
                 .fillMaxSize()
