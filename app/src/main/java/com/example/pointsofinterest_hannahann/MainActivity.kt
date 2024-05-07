@@ -47,6 +47,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.zIndex
 import androidx.core.content.ContextCompat.checkSelfPermission
+import androidx.core.location.LocationManagerCompat.requestLocationUpdates
 import androidx.lifecycle.LifecycleOwner
 import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
@@ -68,20 +69,20 @@ class MainActivity : ComponentActivity() , LocationListener{
     lateinit var db: POIDatabase
 
     @SuppressLint("MissingPermission")
-    fun startGPS() {
+    fun startGPS(gpsRunning:Boolean) {
         val mgr = getSystemService(LOCATION_SERVICE) as LocationManager
         //CHECKS WHETHER ACCESS FINE LOCATION PERMISSION HAS BEEN GRANTED AT RUNTIME
-        if (checkSelfPermission(
-                this,
-                Manifest.permission.ACCESS_FINE_LOCATION
-            ) != PackageManager.PERMISSION_GRANTED && checkSelfPermission(
-                this,
-                Manifest.permission.ACCESS_COARSE_LOCATION
-            ) != PackageManager.PERMISSION_GRANTED
-        ) {
+        if (checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+            != PackageManager.PERMISSION_GRANTED && checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION)
+            != PackageManager.PERMISSION_GRANTED) {
             return
         }
-        mgr.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0f, this)
+        if (gpsRunning) {
+            mgr.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0f, this)
+        } else{
+            mgr.removeUpdates(LocationListener {  })
+        }
+
     }
 
     //Runs when a new location is received from the provider
@@ -161,6 +162,14 @@ class MainActivity : ComponentActivity() , LocationListener{
     }
 
     @Composable
+    fun GpsStatusComposable(latLonViewModel: LatLonViewModel, owner: LifecycleOwner){
+        var status by remember { mutableStateOf(LatLonViewModel.GpsStatus())}
+        latLonViewModel.liveGpsStatus.observe(owner){
+            var status = it
+        }
+    }
+
+    @Composable
     fun MapComposable(mod: Modifier, latLonViewModel: LatLonViewModel,owner: LifecycleOwner,markerToMap:Boolean){
         AndroidView(
             modifier = mod,
@@ -187,7 +196,7 @@ class MainActivity : ComponentActivity() , LocationListener{
                 }
                 view.overlays.add(marker)
             }
-            view.controller.setZoom(17.0)
+            view.controller.setZoom(14.0)
             view.controller.setCenter(GeoPoint(latLonViewModel.latLon.lat,latLonViewModel.latLon.lon))
         }
         GpsPosition(latLonViewModel, owner= this)
@@ -199,7 +208,6 @@ class MainActivity : ComponentActivity() , LocationListener{
         var name by remember { mutableStateOf ("") }
         var type by remember { mutableStateOf ("") }
         var description by remember { mutableStateOf ("") }
-        var markerToMap by remember { mutableStateOf(false) }
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -221,7 +229,6 @@ class MainActivity : ComponentActivity() , LocationListener{
                 OutlinedButton(onClick = {
                     //button to click and connect to the database to add the POI to the database
                     //uses lifecycle
-                    markerToMap = true
                     lifecycleScope.launch {
                         withContext(Dispatchers.IO){
                             val newPOI = POI(0,7, name, type, description,latLonViewModel.latLon.lat,latLonViewModel.latLon.lon)
@@ -266,18 +273,24 @@ class MainActivity : ComponentActivity() , LocationListener{
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally
             ){
-                if (gpsStatus) {
-                    onProviderEnabled("")
+                GpsStatusComposable(latLonViewModel, owner= this@MainActivity )
+                if (latLonViewModel.gpsStatus.status) {
+                    Toast.makeText(applicationContext, "GPS enabled", Toast.LENGTH_SHORT).show()
+                    startGPS(true)
                 } else {
-                    onProviderDisabled("")
+                    startGPS(false)
+                    Toast.makeText(applicationContext, "GPS disabled", Toast.LENGTH_SHORT).show()
                 }
                 if (uploaded){
                     Toast.makeText(applicationContext, "Uploading to web enabled", Toast.LENGTH_SHORT).show()
                 } else {
                     Toast.makeText(applicationContext, "Uploading to web disabled", Toast.LENGTH_SHORT).show()
                 }
+
+
                 Text("Settings" , fontSize = 40.sp, fontWeight = FontWeight.Bold)
                 Spacer(Modifier.height(10.dp))
+                //UPLOADED TO WEB
                 Row {
                     Text("Uploaded to Web " , fontSize = 30.sp, fontWeight = FontWeight.Thin)
                     Switch(checked = uploaded,
@@ -287,11 +300,12 @@ class MainActivity : ComponentActivity() , LocationListener{
                     )
                 }
                 Spacer(Modifier.height(10.dp))
+                //GPS
                 Row{
                     Text("GPS " , fontSize = 30.sp, fontWeight = FontWeight.Thin)
-                    Switch(checked = gpsStatus,
+                    Switch(checked = latLonViewModel.gpsStatus.status,
                         onCheckedChange = {
-                            gpsStatus = it
+                            latLonViewModel.gpsStatus.status = it
                         }
                     )
                 }
@@ -360,7 +374,7 @@ class MainActivity : ComponentActivity() , LocationListener{
             // Request the permission
             val permissionLauncher = registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
                 if(isGranted) {
-                    startGPS() // A function to start the GPS - see below
+                    startGPS(true) // A function to start the GPS - see below
                 } else {
                     // Permission not granted
                     Toast.makeText(this, "GPS permission not granted", Toast.LENGTH_LONG).show()
