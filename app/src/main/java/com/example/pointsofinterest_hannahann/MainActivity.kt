@@ -71,7 +71,6 @@ class MainActivity : ComponentActivity() , LocationListener{
     @SuppressLint("MissingPermission")
     fun startGPS(gpsRunning:Boolean) {
         val mgr = getSystemService(LOCATION_SERVICE) as LocationManager
-
         if (gpsRunning) {
             //CHECKS WHETHER ACCESS FINE LOCATION PERMISSION HAS BEEN GRANTED AT RUNTIME
             if (checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
@@ -83,9 +82,6 @@ class MainActivity : ComponentActivity() , LocationListener{
         } else{
             mgr.removeUpdates(this)
         }
-
-
-
     }
 
     //Runs when a new location is received from the provider
@@ -98,6 +94,7 @@ class MainActivity : ComponentActivity() , LocationListener{
     //write this information here
     override fun onProviderEnabled(provider: String) {
         Toast.makeText(this, "GPS enabled", Toast.LENGTH_LONG).show()
+        latLonViewModel.gpsStatus = LatLonViewModel.GpsStatus(true)
 
     }
     //When you physically disable or enable the GPS from device
@@ -105,6 +102,7 @@ class MainActivity : ComponentActivity() , LocationListener{
     //write this information here
     override fun onProviderDisabled(provider: String) {
         Toast.makeText(this, "GPS disabled", Toast.LENGTH_LONG).show()
+        latLonViewModel.gpsStatus = LatLonViewModel.GpsStatus(false)
     }
 
     override fun onStatusChanged(provider: String,status:Int, extras: Bundle){
